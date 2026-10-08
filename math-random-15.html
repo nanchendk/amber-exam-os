@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>正負數與平均數練習</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+      background: #f5f7fb;
+      color: #222;
+    }
+    .wrap {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 24px 16px 56px;
+    }
+    h1 {
+      text-align: center;
+      margin: 4px 0 8px;
+      font-size: 32px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 24px;
+    }
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .tab {
+      background: white;
+      border: 1px solid #d8deea;
+      font-weight: 700;
+    }
+    .tab.active {
+      background: #222;
+      color: white;
+    }
+    .panel {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 6px 20px rgba(0,0,0,.05);
+    }
+    .section-title {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .section-desc {
+      color: #666;
+      margin-bottom: 18px;
+      line-height: 1.6;
+    }
+    .question {
+      border-top: 1px solid #eceff4;
+      padding: 16px 0;
+    }
+    .question:first-of-type { border-top: 0; }
+    .qtext {
+      font-size: 17px;
+      line-height: 1.7;
+      margin-bottom: 10px;
+    }
+    .answer-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    input[type="number"] {
+      width: 150px;
+      padding: 10px 12px;
+      border: 1px solid #cdd5df;
+      border-radius: 10px;
+      font-size: 16px;
+    }
+    .result {
+      font-weight: 700;
+      min-width: 90px;
+    }
+    .correct { color: #138a4b; }
+    .wrong { color: #c0392b; }
+    .controls {
+      position: sticky;
+      bottom: 12px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 22px;
+      background: rgba(245,247,251,.96);
+      backdrop-filter: blur(8px);
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid #e3e7ee;
+    }
+    .primary { background: #222; color: white; }
+    .secondary { background: white; border: 1px solid #ccd3dd; }
+    .score {
+      margin-left: auto;
+      align-self: center;
+      font-size: 18px;
+      font-weight: 800;
+    }
+    .answer-box {
+      display: none;
+      margin-top: 20px;
+      background: #fff8e8;
+      border: 1px solid #f0d89b;
+      border-radius: 12px;
+      padding: 16px;
+      line-height: 1.9;
+    }
+    .answer-box.show { display: block; }
+    .small { color: #777; font-size: 14px; }
+    @media (max-width: 700px) {
+      h1 { font-size: 26px; }
+      .tabs { grid-template-columns: 1fr; }
+      .score { width: 100%; margin-left: 0; }
+      input[type="number"] { width: 130px; }
+    }
+  </style>
+</head>
+<body><div style="position:sticky;top:0;z-index:9999;background:white;padding:10px;text-align:center;border-bottom:1px solid #ddd"><a href="./index.html" style="display:inline-block;background:#263b74;color:white;padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:bold">🏠 返回 Amber 段考 OS 首頁</a></div>
+  <div class="wrap">
+    <h1>正負數與平均數練習</h1>
+    <div class="subtitle">共 3 個主題；每次隨機抽出 15 題，所有答案皆為整數。</div>
+
+    <div class="tabs">
+      <button class="tab active" data-set="basic">第一回｜基礎題</button>
+      <button class="tab" data-set="reverse">第二回｜反推題</button>
+      <button class="tab" data-set="average">第三回｜平均數綜合</button>
+    </div>
+
+    <div class="panel">
+      <div id="sectionTitle" class="section-title"></div>
+      <div id="sectionDesc" class="section-desc"></div>
+      <div id="questions"></div>
+
+      <div class="answer-box" id="answerBox"></div>
+    </div>
+
+    <div class="controls">
+      <button class="primary" id="newBtn">隨機產生 15 題</button>
+      <button class="primary" id="checkBtn">批改本回</button>
+      <button class="secondary" id="resetBtn">清除作答</button>
+      <button class="secondary" id="answerBtn">顯示答案</button>
+      <div class="score" id="score">尚未批改</div>
+    </div>
+  </div>
+
+  <script>
+    const sets = {
+      basic: {
+        title: "第一回｜基礎題 30 題",
+        desc: "練習依照基準量，把實際數值改寫成正數、負數或 0。",
+        qs: [
+          ["以中午 12 時為基準，下午記正、上午記負。上午 7 時記作？", -5],
+          ["以中午 12 時為基準，下午記正、上午記負。上午 9 時記作？", -3],
+          ["以中午 12 時為基準，下午記正、上午記負。上午 11 時記作？", -1],
+          ["以中午 12 時為基準，下午記正、上午記負。下午 1 時記作？", 1],
+          ["以中午 12 時為基準，下午記正、上午記負。下午 4 時記作？", 4],
+          ["以中午 12 時為基準，下午記正、上午記負。下午 6 時記作？", 6],
+          ["以中午 12 時為基準，下午記正、上午記負。上午 8 時記作？", -4],
+          ["以中午 12 時為基準，下午記正、上午記負。下午 3 時記作？", 3],
+          ["以中午 12 時為基準，下午記正、上午記負。上午 10 時記作？", -2],
+          ["以中午 12 時為基準，下午記正、上午記負。下午 5 時記作？", 5],
+
+          ["以 60 分為基準，高於 60 記正、低於 60 記負。72 分記作？", 12],
+          ["以 60 分為基準，高於 60 記正、低於 60 記負。55 分記作？", -5],
+          ["以 60 分為基準，高於 60 記正、低於 60 記負。60 分記作？", 0],
+          ["以 60 分為基準，高於 60 記正、低於 60 記負。81 分記作？", 21],
+          ["以 60 分為基準，高於 60 記正、低於 60 記負。49 分記作？", -11],
+          ["以 60 分為基準，高於 60 記正、低於 60 記負。68 分記作？", 8],
+          ["以 60 分為基準，高於 60 記正、低於 60 記負。57 分記作？", -3],
+          ["以 60 分為基準，高於 60 記正、低於 60 記負。90 分記作？", 30],
+          ["以 60 分為基準，高於 60 記正、低於 60 記負。44 分記作？", -16],
+          ["以 60 分為基準，高於 60 記正、低於 60 記負。63 分記作？", 3],
+
+          ["以 100 公尺為基準，高於基準記正、低於基準記負。108 公尺記作？", 8],
+          ["以 100 公尺為基準，高於基準記正、低於基準記負。95 公尺記作？", -5],
+          ["以 100 公尺為基準，高於基準記正、低於基準記負。113 公尺記作？", 13],
+          ["以 100 公尺為基準，高於基準記正、低於基準記負。91 公尺記作？", -9],
+          ["以 100 公尺為基準，高於基準記正、低於基準記負。100 公尺記作？", 0],
+          ["以 100 公尺為基準，高於基準記正、低於基準記負。98 公尺記作？", -2],
+          ["以 100 公尺為基準，高於基準記正、低於基準記負。117 公尺記作？", 17],
+          ["以 100 公尺為基準，高於基準記正、低於基準記負。88 公尺記作？", -12],
+          ["以 100 公尺為基準，高於基準記正、低於基準記負。104 公尺記作？", 4],
+          ["以 100 公尺為基準，高於基準記正、低於基準記負。93 公尺記作？", -7]
+        ]
+      },
+
+      reverse: {
+        title: "第二回｜反推題 30 題",
+        desc: "已知正負數表示法，反推出原本的成績、體重或金額。",
+        qs: [
+          ["以 70 分為基準，記作 +12，實際成績是幾分？", 82],
+          ["以 70 分為基準，記作 -8，實際成績是幾分？", 62],
+          ["以 70 分為基準，記作 +25，實際成績是幾分？", 95],
+          ["以 70 分為基準，記作 -16，實際成績是幾分？", 54],
+          ["以 70 分為基準，記作 +7，實際成績是幾分？", 77],
+          ["以 70 分為基準，記作 -3，實際成績是幾分？", 67],
+          ["以 70 分為基準，記作 +19，實際成績是幾分？", 89],
+          ["以 70 分為基準，記作 -21，實際成績是幾分？", 49],
+          ["以 70 分為基準，記作 +30，實際成績是幾分？", 100],
+          ["以 70 分為基準，記作 0，實際成績是幾分？", 70],
+
+          ["以 50 公斤為基準，記作 +6，實際體重是幾公斤？", 56],
+          ["以 50 公斤為基準，記作 -4，實際體重是幾公斤？", 46],
+          ["以 50 公斤為基準，記作 +12，實際體重是幾公斤？", 62],
+          ["以 50 公斤為基準，記作 -9，實際體重是幾公斤？", 41],
+          ["以 50 公斤為基準，記作 +3，實際體重是幾公斤？", 53],
+          ["以 50 公斤為基準，記作 -11，實際體重是幾公斤？", 39],
+          ["以 50 公斤為基準，記作 +18，實際體重是幾公斤？", 68],
+          ["以 50 公斤為基準，記作 -2，實際體重是幾公斤？", 48],
+          ["以 50 公斤為基準，記作 +1，實際體重是幾公斤？", 51],
+          ["以 50 公斤為基準，記作 0，實際體重是幾公斤？", 50],
+
+          ["以 1000 元為基準，記作 +250，實際金額是多少元？", 1250],
+          ["以 1000 元為基準，記作 -180，實際金額是多少元？", 820],
+          ["以 1000 元為基準，記作 +500，實際金額是多少元？", 1500],
+          ["以 1000 元為基準，記作 -350，實際金額是多少元？", 650],
+          ["以 1000 元為基準，記作 +120，實際金額是多少元？", 1120],
+          ["以 1000 元為基準，記作 -90，實際金額是多少元？", 910],
+          ["以 1000 元為基準，記作 +700，實際金額是多少元？", 1700],
+          ["以 1000 元為基準，記作 -600，實際金額是多少元？", 400],
+          ["以 1000 元為基準，記作 +40，實際金額是多少元？", 1040],
+          ["以 1000 元為基準，記作 0，實際金額是多少元？", 1000]
+        ]
+      },
+
+      average: {
+        title: "第三回｜平均數綜合題 30 題",
+        desc: "練習平均數、未知數，以及平均數和基準量的綜合運用；所有答案皆為整數。",
+        qs: [
+          ["甲、乙、丙三人的平均是 70 分。甲 68 分、乙 75 分，丙是幾分？", 67],
+          ["四人的平均是 80 分，其中三人為 77、83、82 分，第四人是幾分？", 78],
+          ["五人的平均是 72 分，其中四人為 70、68、75、74 分，第五人是幾分？", 73],
+          ["三人的平均是 65 分，其中兩人為 60、68 分，第三人是幾分？", 67],
+          ["四人的平均是 75 分，其中三人為 70、79、73 分，第四人是幾分？", 78],
+          ["五人的平均是 84 分，其中四人為 80、86、85、82 分，第五人是幾分？", 87],
+          ["三人的平均是 90 分，其中兩人為 88、92 分，第三人是幾分？", 90],
+          ["四人的平均是 68 分，其中三人為 65、70、67 分，第四人是幾分？", 70],
+          ["五人的平均是 76 分，其中四人為 72、75、79、80 分，第五人是幾分？", 74],
+          ["六人的平均是 70 分，其中五人為 66、68、72、74、71 分，第六人是幾分？", 69],
+
+          ["四人成績為 70、74、78、82 分，平均是幾分？", 76],
+          ["五人成績為 60、65、70、75、80 分，平均是幾分？", 70],
+          ["三人成績為 84、90、90 分，平均是幾分？", 88],
+          ["四人成績為 62、68、72、78 分，平均是幾分？", 70],
+          ["五人成績為 81、79、85、75、80 分，平均是幾分？", 80],
+          ["三人成績為 95、90、85 分，平均是幾分？", 90],
+          ["六人成績為 60、66、72、78、84、90 分，平均是幾分？", 75],
+          ["四人成績為 54、66、72、88 分，平均是幾分？", 70],
+          ["五人成績為 68、69、70、71、72 分，平均是幾分？", 70],
+          ["三人成績為 77、83、80 分，平均是幾分？", 80],
+
+          ["五人的平均是 70 分。若以 60 分為基準，這個平均成績記作多少？", 10],
+          ["四人的平均是 82 分。若以 70 分為基準，這個平均成績記作多少？", 12],
+          ["三人的平均是 65 分。若以 70 分為基準，這個平均成績記作多少？", -5],
+          ["六人的平均是 75 分。若以 80 分為基準，這個平均成績記作多少？", -5],
+          ["五人的平均是 90 分。若以 75 分為基準，這個平均成績記作多少？", 15],
+          ["四人的平均是 68 分。若以 60 分為基準，這個平均成績記作多少？", 8],
+          ["三人的平均是 55 分。若以 70 分為基準，這個平均成績記作多少？", -15],
+          ["六人的平均是 84 分。若以 80 分為基準，這個平均成績記作多少？", 4],
+          ["五人的平均是 73 分。若以 70 分為基準，這個平均成績記作多少？", 3],
+          ["四人的平均是 69 分。若以 70 分為基準，這個平均成績記作多少？", -1]
+        ]
+      }
+    };
+
+    let currentSet = "basic";
+    let currentQuestions = [];
+
+    function shuffle(array) {
+      const copy = [...array];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function generateQuestions() {
+      currentQuestions = shuffle(sets[currentSet].qs).slice(0, 15);
+      render();
+    }
+
+    function render() {
+      const data = sets[currentSet];
+      document.getElementById("sectionTitle").textContent = data.title.replace("30 題", "每次隨機 15 題");
+      document.getElementById("sectionDesc").textContent =
+        data.desc + " 每次按「隨機產生 15 題」都會重新抽題。";
+      document.getElementById("score").textContent = "尚未批改";
+      document.getElementById("answerBox").classList.remove("show");
+      document.getElementById("answerBtn").textContent = "顯示答案";
+
+      const box = document.getElementById("questions");
+      box.innerHTML = currentQuestions.map((q, i) => `
+        <div class="question">
+          <div class="qtext"><strong>${i + 1}.</strong> ${q[0]}</div>
+          <div class="answer-row">
+            <input type="number" id="ans-${i}" inputmode="numeric" placeholder="輸入答案">
+            <span class="result" id="res-${i}"></span>
+          </div>
+        </div>
+      `).join("");
+
+      const answers = currentQuestions.map((q, i) => `${i + 1}. ${q[1]}`).join("　");
+      document.getElementById("answerBox").innerHTML =
+        `<strong>本次 15 題答案：</strong><br>${answers}<br><span class="small">提示：建議先完成再查看答案。</span>`;
+    }
+
+    document.querySelectorAll(".tab").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentSet = btn.dataset.set;
+        generateQuestions();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    });
+
+    document.getElementById("checkBtn").addEventListener("click", () => {
+      const data = { qs: currentQuestions };
+      let correct = 0;
+      let answered = 0;
+
+      data.qs.forEach((q, i) => {
+        const input = document.getElementById(`ans-${i}`);
+        const res = document.getElementById(`res-${i}`);
+        const raw = input.value.trim();
+
+        res.className = "result";
+
+        if (raw === "") {
+          res.textContent = "未作答";
+          return;
+        }
+
+        answered++;
+        if (Number(raw) === q[1]) {
+          correct++;
+          res.textContent = "✓ 正確";
+          res.classList.add("correct");
+        } else {
+          res.textContent = "✗ 再想想";
+          res.classList.add("wrong");
+        }
+      });
+
+      document.getElementById("score").textContent =
+        `得分：${correct} / 15（已作答 ${answered} 題）`;
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      currentQuestions.forEach((q, i) => {
+        document.getElementById(`ans-${i}`).value = "";
+        const res = document.getElementById(`res-${i}`);
+        res.textContent = "";
+        res.className = "result";
+      });
+      document.getElementById("score").textContent = "尚未批改";
+    });
+
+    document.getElementById("newBtn").addEventListener("click", () => {
+      generateQuestions();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    document.getElementById("answerBtn").addEventListener("click", () => {
+      const box = document.getElementById("answerBox");
+      const show = !box.classList.contains("show");
+      box.classList.toggle("show", show);
+      document.getElementById("answerBtn").textContent = show ? "隱藏答案" : "顯示答案";
+      if (show) box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+
+    generateQuestions();
+  </script>
+</body>
+</html>
